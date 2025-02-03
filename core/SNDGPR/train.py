@@ -5,7 +5,7 @@ from gpytorch.constraints.constraints import GreaterThan
 
 from torch.optim import Adam
 from torch.optim.lr_scheduler import CosineAnnealingLR
-from SNDGPR import GPRegressionModel
+from core.SNDGPR.SNDGPR import GPRegressionModel
 
 
 def train_model(train_x, train_g, val_x, val_g, training_iterations, lr, layer_sizes, activation_fn, spectral_normalization):
@@ -38,9 +38,10 @@ def train_model(train_x, train_g, val_x, val_g, training_iterations, lr, layer_s
 
     # Training loop with validation
     def train():
-        best_loss, best_val_loss, best_train_loss = 1e4, 1e4, 1e4
+        best_loss, best_val_loss, best_train_loss = 1e8, 1e8, 1e8
         patience = int(training_iterations * 0.1)
         wait = 0
+        best_epoch = 0
 
         for epoch in range(training_iterations):
             model.train()

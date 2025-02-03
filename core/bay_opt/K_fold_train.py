@@ -1,17 +1,22 @@
 from sklearn.model_selection import KFold
-from ..utils import min_max_normalization
+from ..utils import min_max_normalization, load_core_modules
+from core.SNDGPR.train import train_model
+from core.MCS import MC_prediction, estimate_Pf
 
 
 def kfold_train(x, g, x_candidate, epochs, lr, layer_sizes, activation_fn,
-                train_model, MC_prediction, evaluate_lf, estimate_Pf, learning_function,
-                N, N_MC, ALPHA, SPECTRAL_NORMALIZATION, n_splits=6, SEED=42):
+                N, N_MC, ALPHA, SPECTRAL_NORMALIZATION, Params, n_splits=6, SEED=42):
+    
+    _, learning_function, evaluate_lf, _ = load_core_modules(
+    Params['initial_sampling_plan'], Params['learning_function'], Params['convergence_function']
+)
     
     kf = KFold(n_splits=n_splits, shuffle=True, random_state=SEED)
     
     avg_losses = []
     it = 0
     
-    best_loss = 1e2
+    best_loss = 1e8
 
     # Split data into training and validation using KFold
     for train_idx, val_idx in kf.split(x):
@@ -33,8 +38,10 @@ def kfold_train(x, g, x_candidate, epochs, lr, layer_sizes, activation_fn,
         success, attempts, max_attempts = False, 0, 2
         while not success and attempts < max_attempts:
             try:
-                model, likelihood, avg_loss, model_training_losses, model_validation_losses = train_model(
-                    train_x, train_g, val_x, val_g, epochs, lr, layer_sizes, activation_fn, SPECTRAL_NORMALIZATION)
+                model, likelihood, avg_loss, model_training_losses, model_validation_losses \
+                    = train_model(
+                    train_x, train_g, val_x, val_g, epochs, lr, layer_sizes, activation_fn, \
+                        SPECTRAL_NORMALIZATION)
                 success = True  # Training was successful, exit loop
                 print(f"  Training succeeded after {attempts + 1} attempt(s).")
             except Exception as e:
@@ -62,7 +69,7 @@ def kfold_train(x, g, x_candidate, epochs, lr, layer_sizes, activation_fn,
 
         # Update best model
         delta = (Pf_plus - Pf_minus)/Pf
-        print(f'delta = {delta*100:.2f}%, avg. loss = {avg_loss:.4f}')
+        print(f'avg. loss = {avg_loss:.4f}, delta = {delta*100:.2f}%, Pf: [{Pf_plus}, {Pf}, {Pf_minus}]')
         
         if avg_loss < best_loss and Pf_plus > 1e-4:
             print(f'New best model found at fold {it}:')
@@ -84,7 +91,7 @@ def kfold_train(x, g, x_candidate, epochs, lr, layer_sizes, activation_fn,
         print(f'Fold: {it}, Avg. Loss: {avg_loss}\n')
     
     if len(avg_losses) == 0:
-        return 1e2
+        return 1e8
     
     # Average validation loss over all folds
     avg_avg_loss = sum(avg_losses) / n_splits

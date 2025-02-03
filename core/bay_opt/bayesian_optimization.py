@@ -3,16 +3,19 @@ import numpy as np
 from scipy.stats import qmc
 from sklearn.model_selection import train_test_split
 
-from objective_function import obj_fun
-from bsa import bsa
-from train import train_model_EGO
-from expected_improvement import expected_improvement
-from .optimization_variables import optimization_variables
+from core.bay_opt.objective_function import obj_fun
+from core.bay_opt.bsa import bsa
+from core.bay_opt.train import train_model_EGO
+from core.bay_opt.expected_improvement import expected_improvement
+from core.bay_opt.optimization_variables import optimization_variables
 
 
 def bayesian_optimization(
-    x, N_INITIAL_EGO, N_INFILL_EGO, DIM_EGO, TRAINING_ITERATIONS_EGO, BOUNDS_BSA, BSA_POPSIZE, BSA_EPOCH, \
-    SEED, TRAINING_ITERATIONS, BOUNDS_BAY_OPT, SPECTRAL_NORMALIZATION
+    x, g, x_candidate, N, N_MC, ALPHA, \
+    N_INITIAL_EGO, N_INFILL_EGO, DIM_EGO, TRAINING_ITERATIONS_EGO, \
+    BOUNDS_BSA, BSA_POPSIZE, BSA_EPOCH, \
+    SEED, TRAINING_ITERATIONS, BOUNDS_BAY_OPT, SPECTRAL_NORMALIZATION, \
+    VALIDATION_SPLIT, LEARNING_RATE,  Params
     ):
     
     x_EGO = qmc.LatinHypercube(d=DIM_EGO, optimization="random-cd", seed=SEED)
@@ -22,7 +25,8 @@ def bayesian_optimization(
     
     f_EGO, best_model, best_likelihood, best_train_losses, best_val_losses, \
           train_x, val_x, train_g, val_g, best_x_max, best_x_min = \
-        obj_fun(x_EGO)
+        obj_fun(x_EGO, x, g, x_candidate, N, N_MC, ALPHA, BOUNDS_BAY_OPT, SPECTRAL_NORMALIZATION, VALIDATION_SPLIT,
+            TRAINING_ITERATIONS, LEARNING_RATE, SEED, Params)
     f_EGO = f_EGO.view(N_INITIAL_EGO)
     
     overall_best_model = best_model
@@ -55,7 +59,10 @@ def bayesian_optimization(
 
         # Objective function at the new point
         f_new, best_model, best_likelihood, best_train_losses, best_val_losses, \
-            train_x, val_x, train_g, val_g, best_x_max, best_x_min = obj_fun(x_new)
+            train_x, val_x, train_g, val_g, best_x_max, best_x_min = obj_fun(
+                x_new, x, g, x_candidate, N, N_MC, ALPHA, BOUNDS_BAY_OPT, SPECTRAL_NORMALIZATION, VALIDATION_SPLIT,
+            TRAINING_ITERATIONS, LEARNING_RATE, SEED, Params
+                )
         f_new = f_new.view(-1)
         
         print(f'Iteration {it} of {N_INFILL_EGO}')

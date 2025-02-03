@@ -2,6 +2,7 @@ from scipy.stats import qmc
 from scipy.stats import uniform, norm, lognorm, gumbel_r, \
     gamma, expon, rayleigh
 import numpy as np
+import torch
 
 
 def LHS(num_points, variable_specs, SEED):
@@ -94,4 +95,4 @@ def LHS(num_points, variable_specs, SEED):
             transformed_sample[:, i] = rayleigh.ppf(lhs_sample[:, i],
                                     loc=loc, scale=scale)
 
-    return transformed_sample
+    return torch.Tensor(transformed_sample)

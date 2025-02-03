@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import scipy.io as sio
 from datetime import datetime
 from scipy.special import ndtri
-from bay_opt import optimization_variables
+from .bay_opt import optimization_variables
 
 
 def min_max_normalization(x_max, x_min, x_candidate):
@@ -55,14 +55,20 @@ def evaluate_g(x_added, it, limit_state_function, EXAMPLE):
 def save_bests(best_model, best_likelihood, best_training_losses, best_validation_losses,
                x, train_x, val_x, train_g, val_g, x_EGO, f_EGO, x_max, x_min,
                it, BOUNDS_BAY_OPT, SPECTRAL_NORMALIZATION, EXAMPLE):
-    torch.save(best_model.state_dict(), f'best_model_{it}.pth')
+    
+    
+    # Define the folder path for saving files
+    folder_path = os.path.join(EXAMPLE, "data/best_model")
+    os.makedirs(folder_path, exist_ok=True)  # Create the folder if it doesn't exist
+
+    # Save the model state using torch
+    torch_model_likelihood_path = os.path.join(folder_path, f'best_model_and_likelihood_{it}.pth')
     torch.save({
         'model_state_dict': best_model.state_dict(),
         'likelihood_state_dict': best_likelihood.state_dict(),
-    }, f"best_model_and_likelihood_{it}.pth")
+    }, torch_model_likelihood_path)
 
     layer_sizes, act_fun = optimization_variables(BOUNDS_BAY_OPT, x_EGO[torch.argmin(f_EGO), :], x, SPECTRAL_NORMALIZATION)
-
 
     folder_path = os.path.join(EXAMPLE, "data/variables")
     os.makedirs(folder_path, exist_ok=True)  # Create the folder if it doesn't exist
