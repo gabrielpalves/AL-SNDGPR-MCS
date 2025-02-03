@@ -1,10 +1,10 @@
 import torch
-from K_fold_train import kfold_train
-from .optimization_variables import optimization_variables
+from core.bay_opt.K_fold_train import kfold_train
+from core.bay_opt.optimization_variables import optimization_variables
 
 
-def obj_fun(xx, x, g, x_candidate, BOUNDS_BAY_OPT, SPECTRAL_NORMALIZATION, VALIDATION_SPLIT,
-            TRAINING_ITERATIONS, LEARNING_RATE):
+def obj_fun(xx, x, g, x_candidate, N, N_MC, ALPHA, BOUNDS_BAY_OPT, SPECTRAL_NORMALIZATION, VALIDATION_SPLIT,
+            TRAINING_ITERATIONS, LEARNING_RATE, SEED, Params):
     """
     Inputs:
         L -> number of layers
@@ -27,8 +27,10 @@ def obj_fun(xx, x, g, x_candidate, BOUNDS_BAY_OPT, SPECTRAL_NORMALIZATION, VALID
         # Train the model with the sampled hyperparameters
         fobj, loss, model, likelihood, train_losses, val_losses, train_x, val_x, train_g, val_g, x_max, x_min, fold = \
             kfold_train(
-            x, g, x_candidate, TRAINING_ITERATIONS, LEARNING_RATE, layer_sizes, act_fun, SPECTRAL_NORMALIZATION, n_splits=VALIDATION_SPLIT
+            x, g, x_candidate, TRAINING_ITERATIONS, LEARNING_RATE, layer_sizes, act_fun, \
+                N, N_MC, ALPHA, SPECTRAL_NORMALIZATION, Params, n_splits=VALIDATION_SPLIT, SEED=SEED
             )
+
         print(f'obj fun (avg loss): {fobj:.2f} -> best fold: {fold}\n\n')
         
         fobj_all[idx] = fobj

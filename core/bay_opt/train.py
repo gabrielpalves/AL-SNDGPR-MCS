@@ -2,7 +2,7 @@ import torch
 from torch.optim import Adam
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.mlls import ExactMarginalLogLikelihood
-from GPR import GPRegressionModel_EGO
+from core.bay_opt.GPR import GPRegressionModel_EGO
 
 
 def train_model_EGO(train_x, train_g, val_x, val_g, training_iterations):
@@ -34,7 +34,7 @@ def train_model_EGO(train_x, train_g, val_x, val_g, training_iterations):
 
     # Training loop with validation
     def train():
-        best_loss, best_val_loss, best_train_loss = 1e4, 1e4, 1e4
+        best_loss, best_val_loss, best_train_loss = 1e8, 1e8, 1e8
         patience = int(training_iterations * 0.025)
         wait = 0
 
