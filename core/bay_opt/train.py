@@ -3,12 +3,17 @@ from torch.optim import Adam
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.mlls import ExactMarginalLogLikelihood
 from core.bay_opt.GPR import GPRegressionModel_EGO
+import os.path
 
 
 def train_model_EGO(train_x, train_g, val_x, val_g, training_iterations):
     # Initialize the models and likelihood
     likelihood = GaussianLikelihood()
     model = GPRegressionModel_EGO(train_x=train_x, train_y=train_g, likelihood=likelihood)
+    
+    folder_path = os.path.join(EXAMPLE, "data/best_models/temp")
+    os.makedirs(folder_path, exist_ok=True)  # Create the folder if it doesn't exist
+    model_path = os.path.join(folder_path, f'best_model_and_likelihood_GPR.pth')
 
     # if torch.cuda.is_available():
     #     model = model.cuda()
@@ -70,7 +75,7 @@ def train_model_EGO(train_x, train_g, val_x, val_g, training_iterations):
                 torch.save({
                     'model_state_dict': model.state_dict(),
                     'likelihood_state_dict': likelihood.state_dict(),
-                }, "best_model_and_likelihood_GPR.pth")
+                }, model_path)
                 wait = 0  # Reset patience counter when improvement is found
             else:
                 wait += 1  # Increment patience counter if no improvement
@@ -91,8 +96,7 @@ def train_model_EGO(train_x, train_g, val_x, val_g, training_iterations):
     best_loss = train()
 
     # Load the best model state
-    # model.load_state_dict(torch.load('best_model_GPR.pth'))
-    checkpoint = torch.load("best_model_and_likelihood_GPR.pth")
+    checkpoint = torch.load(model_path)
     model.load_state_dict(checkpoint['model_state_dict'])
     likelihood.load_state_dict(checkpoint['likelihood_state_dict'])
 

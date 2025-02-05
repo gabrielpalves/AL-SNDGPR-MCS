@@ -2,10 +2,10 @@ import torch
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.mlls import ExactMarginalLogLikelihood
 from gpytorch.constraints.constraints import GreaterThan
-
 from torch.optim import Adam
 from torch.optim.lr_scheduler import CosineAnnealingLR
 from core.SNDGPR.SNDGPR import GPRegressionModel
+import os.path
 
 
 def train_model(train_x, train_g, val_x, val_g, training_iterations, lr, layer_sizes, activation_fn, spectral_normalization):
@@ -13,6 +13,10 @@ def train_model(train_x, train_g, val_x, val_g, training_iterations, lr, layer_s
     likelihood = GaussianLikelihood(noise_constraint=GreaterThan(1e-4))
     model = GPRegressionModel(train_x=train_x, train_y=train_g, likelihood=likelihood, layer_sizes=layer_sizes,
                               activation_fn=activation_fn, spectral_normalization=spectral_normalization)
+    
+    folder_path = os.path.join(EXAMPLE, "data/best_models/temp")
+    os.makedirs(folder_path, exist_ok=True)  # Create the folder if it doesn't exist
+    model_path = os.path.join(folder_path, f'best_model_and_likelihood.pth')
 
     # Find optimal model hyperparameters
     model.train()
@@ -78,7 +82,7 @@ def train_model(train_x, train_g, val_x, val_g, training_iterations, lr, layer_s
                 torch.save({
                     'model_state_dict': model.state_dict(),
                     'likelihood_state_dict': likelihood.state_dict(),
-                }, "best_model_and_likelihood.pth")
+                }, model_path)
                 wait = 0  # Reset patience counter when improvement is found
             else:
                 wait += 1  # Increment patience counter if no improvement
@@ -99,8 +103,7 @@ def train_model(train_x, train_g, val_x, val_g, training_iterations, lr, layer_s
     best_loss = train()
 
     # Load the best model state
-    # model.load_state_dict(torch.load('best_model.pth'))
-    checkpoint = torch.load("best_model_and_likelihood.pth")
+    checkpoint = torch.load(model_path)
     model.load_state_dict(checkpoint['model_state_dict'])
     likelihood.load_state_dict(checkpoint['likelihood_state_dict'])
 
