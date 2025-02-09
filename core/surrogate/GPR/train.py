@@ -2,14 +2,14 @@ import torch
 from torch.optim import Adam
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.mlls import ExactMarginalLogLikelihood
-from core.bay_opt.GPR import GPRegressionModel_EGO
+from core.surrogate.GPR import GPRegressionModel
 import os.path
 
 
 def train_model_EGO(train_x, train_g, val_x, val_g, training_iterations):
     # Initialize the models and likelihood
     likelihood = GaussianLikelihood()
-    model = GPRegressionModel_EGO(train_x=train_x, train_y=train_g, likelihood=likelihood)
+    model = GPRegressionModel(train_x=train_x, train_y=train_g, likelihood=likelihood)
     
     folder_path = os.path.join(EXAMPLE, "data/best_models/temp")
     os.makedirs(folder_path, exist_ok=True)  # Create the folder if it doesn't exist

@@ -1,6 +1,6 @@
 import torch
-from core.bay_opt.K_fold_train import kfold_train
-from core.bay_opt.optimization_variables import optimization_variables
+from core.K_fold_CV import kfold_train
+from core.hyper_params_opt import optimization_variables
 
 
 def obj_fun(xx, x, g, x_candidate, N, N_MC, ALPHA, BOUNDS_BAY_OPT, SPECTRAL_NORMALIZATION, VALIDATION_SPLIT,

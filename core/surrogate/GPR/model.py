@@ -5,9 +5,9 @@ from gpytorch.kernels import ScaleKernel, RBFKernel
 from gpytorch.utils.grid import ScaleToBounds
 
 
-class GPRegressionModel_EGO(ExactGP):
+class GPRegressionModel(ExactGP):
     def __init__(self, train_x, train_y, likelihood):
-        super(GPRegressionModel_EGO, self).__init__(train_x, train_y, likelihood)
+        super(GPRegressionModel, self).__init__(train_x, train_y, likelihood)
         self.mean_module = ConstantMean()
         self.covar_module = ScaleKernel(RBFKernel())
         self.scale_to_bounds = ScaleToBounds(-1., 1.)

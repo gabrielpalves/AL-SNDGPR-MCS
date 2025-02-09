@@ -1,5 +1,5 @@
 from sklearn.model_selection import KFold
-from ..utils import min_max_normalization, load_core_modules
+from .utils import min_max_normalization, load_core_modules
 from core.SNDGPR.train import train_model
 from core.MCS import MC_prediction, estimate_Pf
 

@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import scipy.io as sio
 from datetime import datetime
 from scipy.special import ndtri
-from .bay_opt import optimization_variables
+from core.hyper_params_opt import optimization_variables
 
 
 def min_max_normalization(x_max, x_min, x_candidate):

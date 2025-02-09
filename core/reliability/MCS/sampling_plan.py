@@ -1,11 +1,8 @@
 import torch
-from gpytorch.settings import use_toeplitz, fast_pred_var
 import numpy as np
-from scipy.special import ndtri
 from scipy.stats import norm, rayleigh
 
-
-def MC_sampling_plan(size, variable_specs):
+def sampling_plan(size, variable_specs):
     # Number of variables and sampling points
     size = int(size)
 
@@ -86,24 +83,3 @@ def MC_sampling_plan(size, variable_specs):
                                     loc=loc, scale=scale)
 
     return torch.Tensor(points)
-
-
-def MC_prediction(model, likelihood, x_candidate):
-    model.eval()
-    likelihood.eval()
-    with torch.no_grad(), use_toeplitz(False), fast_pred_var():
-        return model(x_candidate)
-
-
-def estimate_Pf(g, g_mean, gs, N, N_MC, ALPHA):
-    Pf = (torch.sum(g_mean <= 0) + torch.sum(g[N+1:] <= 0))/N_MC
-    Pf_plus = (
-        torch.sum(g_mean - gs*ndtri(1-ALPHA/2) <= 0) +
-        torch.sum(g[N+1:] <= 0)
-        )/N_MC
-    Pf_minus = (
-        torch.sum(g_mean + gs*ndtri(1-ALPHA/2) <= 0) +
-        torch.sum(g[N+1:] <= 0)
-        )/N_MC
-    
-    return Pf, Pf_plus, Pf_minus
