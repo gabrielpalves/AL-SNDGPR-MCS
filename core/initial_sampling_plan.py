@@ -5,7 +5,7 @@ import numpy as np
 import torch
 
 
-def LHS(num_points, variable_specs, SEED):
+def LHS(variable_specs, num_points, seed):
     """Latin Hypercube sampling plan"""
     # Number of variables and sampling points
     size = int(num_points)
@@ -15,7 +15,7 @@ def LHS(num_points, variable_specs, SEED):
     # Generate LHS samples
     sampler = qmc.LatinHypercube(d=num_variables,
                                  optimization="random-cd",
-                                 seed=SEED)
+                                 seed=seed)
     lhs_sample = sampler.random(n=size)
 
     # Initialize an array for the transformed samples
@@ -23,8 +23,14 @@ def LHS(num_points, variable_specs, SEED):
 
     # Example transformations for each variable
     for i, spec in enumerate(variable_specs):
-        distribution = spec['distribution'].lower()
-        parameters = spec['moments']
+        distribution = "uniform"
+        if 'distribution' in spec.keys():
+            distribution = spec['distribution'].lower()
+        
+        parameters = [0, 1]
+        if 'moments' in spec.keys():
+            parameters = spec['moments']
+        
         bounds = []
         if 'bounds' in spec.keys():
             bounds = spec['bounds']

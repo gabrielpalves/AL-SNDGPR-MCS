@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import scipy.io as sio
 from datetime import datetime
 from scipy.special import ndtri
-from .bay_opt import optimization_variables
+from core.hyper_params_opt import optimization_variables
 
 
 def min_max_normalization(x_max, x_min, x_candidate):
@@ -17,7 +17,7 @@ def min_max_normalization(x_max, x_min, x_candidate):
 def save_x_added(x_added, it, EXAMPLE):
     numpy_array = x_added.numpy()
     # Define the folder path within the example directory
-    folder_path = os.path.join(EXAMPLE, "data/x")
+    folder_path = os.path.join(EXAMPLE, "data/sampling_plan")
     os.makedirs(folder_path, exist_ok=True)  # Create the folder if it doesn't exist
 
     # Save the .mat file inside the example's data folder
@@ -28,13 +28,12 @@ def save_x_added(x_added, it, EXAMPLE):
 
 
 def evaluate_g(x_added, it, limit_state_function, EXAMPLE):
+    # Define the folder path within the example directory
     file_name = f'g{it-1}.mat'
+    folder_path = os.path.join(EXAMPLE, "data/sampling_plan")
+    os.makedirs(folder_path, exist_ok=True)  # Create the folder if it doesn't exist
     full_path = os.path.join(folder_path, file_name)
     check_file = os.path.isfile(full_path)
-    
-    # Define the folder path within the example directory
-    folder_path = os.path.join(EXAMPLE, "data/g")
-    os.makedirs(folder_path, exist_ok=True)  # Create the folder if it doesn't exist
 
     if check_file:
         mat_contents = sio.loadmat(full_path)
@@ -58,7 +57,7 @@ def save_bests(best_model, best_likelihood, best_training_losses, best_validatio
     
     
     # Define the folder path for saving files
-    folder_path = os.path.join(EXAMPLE, "data/best_model")
+    folder_path = os.path.join(EXAMPLE, "data/best_models")
     os.makedirs(folder_path, exist_ok=True)  # Create the folder if it doesn't exist
 
     # Save the model state using torch
