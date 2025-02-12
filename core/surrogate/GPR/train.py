@@ -2,11 +2,23 @@ import torch
 from torch.optim import Adam
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.mlls import ExactMarginalLogLikelihood
-from core.surrogate.GPR import GPRegressionModel
+from core.surrogate.GPR.model import GPRegressionModel
 import os.path
 
 
-def train_model_EGO(train_x, train_g, val_x, val_g, training_iterations):
+def train_model(Data, Params, opt=True):
+    train_x, train_g, val_x, val_g = Data.train_x, Data.train_g, Data.val_x, Data.val_g
+    
+    training_iterations = Params.surrogate.training
+    lr = Params.surrogate.learning_rate
+    if opt:
+        # check if it used for optimization of hyperparameters
+        # or if it is the surrogate used to calculate the Pf
+        training_iterations = Params.optimization.training_iterations_ego
+        lr = Params.optimization.learning_rate_ego
+    
+    EXAMPLE = Params.config.example
+
     # Initialize the models and likelihood
     likelihood = GaussianLikelihood()
     model = GPRegressionModel(train_x=train_x, train_y=train_g, likelihood=likelihood)
@@ -28,7 +40,7 @@ def train_model_EGO(train_x, train_g, val_x, val_g, training_iterations):
         {'params': model.covar_module.parameters()},
         {'params': model.mean_module.parameters()},
         {'params': model.likelihood.parameters()},
-    ], lr=0.005)
+    ], lr=lr)
 
     # "Loss" for GPs - the marginal log likelihood
     mll = ExactMarginalLogLikelihood(likelihood, model)
@@ -115,4 +127,4 @@ def train_model_EGO(train_x, train_g, val_x, val_g, training_iterations):
     # plt.grid(True)
     # plt.show()
 
-    return model, likelihood, best_loss
+    return model, likelihood, best_loss, training_losses, validation_losses

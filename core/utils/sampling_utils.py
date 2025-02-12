@@ -24,6 +24,7 @@ def add_x(x_candidate, ind_lf, it, EXAMPLE):
     return x_added
 
 def evaluate_g(x_added, it, limit_state_function, EXAMPLE):
+    # Evaluate limit state function
     folder_path = os.path.join(EXAMPLE, "data/sampling_plan")
     file_name = f'g{it-1}.mat'
     full_path = os.path.join(folder_path, file_name)
@@ -34,3 +35,11 @@ def evaluate_g(x_added, it, limit_state_function, EXAMPLE):
         g_added = torch.Tensor(limit_state_function(x_added))
         sio.savemat(full_path, {'g': g_added.numpy()})
     return g_added
+
+def keep_best(Data, OptData):
+    Data.model, Data.likelihood = OptData.model, OptData.likelihood
+    Data.train_losses, Data.val_losses = OptData.train_losses, OptData.val_losses
+    Data.train_x, Data.val_x = OptData.train_x, OptData.val_x
+    Data.train_g, Data.val_g = OptData.train_g, OptData.val_g
+    Data.x_max, Data.x_min = OptData.x_max, OptData.x_min
+    return Data

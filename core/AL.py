@@ -1,18 +1,33 @@
 import torch
+import numpy as np
+from scipy.special import ndtri
 
 from core.hyper_params_opt.bay_opt import bayesian_optimization
-from core.utils.utils import load_core_modules, load_example_modules
+from core.hyper_params_opt.optimization_variables import optimization_variables
+from core.K_fold_CV import kfold_train
+from core.utils.sampling_utils import min_max_normalization, add_x, evaluate_g
+from core.utils.serialization_utils import save_bests, pickle_save
+from core.utils.plot_utils import plot_losses, print_info
+from core.utils.import_utils import load_core_modules, load_example_modules, \
+    load_surrogate_modules, load_reliability_modules
+from core.configs import RuntimeData
 
-def AL(data, params, hyperparams, optparams):
-    RVs, limit_state_function = load_example_modules(EXAMPLE)
-    initial_sampling_plan, learning_function, evaluate_lf, convergence_function = load_core_modules(
-    SAMPLING_PLAN_STRATEGY, LEARNING_FUNCTION, CONVERGENCE_FUNCTION
-    )
+
+def AL(EXAMPLE):
+    # Load important modules
+    RVs, limit_state_function, Params = load_example_modules(EXAMPLE)
+    initial_sampling_plan, learning_function, evaluate_lf, convergence_function \
+        = load_core_modules(Params)
+    predict, train = load_surrogate_modules(Params)
+    estimate_Pf, sampling_plan = load_reliability_modules(Params)
     
-    x = initial_sampling_plan(N, RVs, SEED)
-    x_candidate = sampling_plan(N_PREDICT, RVs)  # sampling plan to predict
+    # Initiate samples
+    Data.x = initial_sampling_plan(RVs, Params.config.n_initial, Params.config.seed)
+    Data.x_candidate = sampling_plan(RVs, Params.reliability.n)  # sampling plan to predict
 
-    data_dim = x.shape[1]
+    # Define important variables
+    Data = RuntimeData()
+    data_dim = Data.x.shape[1]
     estimate_Pf_all = []
     estimate_Pf_allp = []
     estimate_Pf_allm = []
@@ -21,87 +36,78 @@ def AL(data, params, hyperparams, optparams):
     converged = False
     it = 0
 
+    # Begin AL loop
     while True:
         print(f'\nIteration {it}')
         
-        if it == 0:
-            f_EGO, x_EGO, model, likelihood, train_losses, val_losses, train_x, val_x, train_g, val_g, x_max, x_min \
-                = bayesian_optimization(
-                    x, g, x_candidate, N, N_MC, ALPHA, N_INITIAL_EGO, N_INFILL_EGO, DIM_EGO, \
-                    TRAINING_ITERATIONS_EGO, BOUNDS_BSA, BSA_POPSIZE, BSA_EPOCH, \
-                    SEED, TRAINING_ITERATIONS, BOUNDS_OPT, SPECTRAL_NORMALIZATION, \
-                    VALIDATION_SPLIT, LEARNING_RATE, Params
-                    )
-                
-        else:
-            layer_sizes, act_fun = optimization_variables(BOUNDS_OPT, x_EGO[torch.argmin(f_EGO), :], x, SPECTRAL_NORMALIZATION)
-            
-            _, _, model, likelihood, train_losses, val_losses, train_x, val_x, train_g, val_g, x_max, x_min, fold \
-                = kfold_train(
-                x, g, x_candidate, TRAINING_ITERATIONS, LEARNING_RATE, layer_sizes, act_fun, \
-                    N, N_MC, ALPHA, SPECTRAL_NORMALIZATION, Params, n_splits=VALIDATION_SPLIT, SEED=SEED
-                )
+        if it == 0:  # optimize
+            Data = bayesian_optimization(Data, Params)
+        else:  # use already optimized hyperparameters
+            layer_sizes, act_fun = optimization_variables(Data, Params)
+            _, _, Data = kfold_train(layer_sizes, act_fun, train, Data, Params)
         
         # Save variables and plot loss
-        save_bests(model, likelihood, train_losses, val_losses, x, train_x, val_x, train_g, val_g,
-                x_EGO, f_EGO, x_max, x_min, it, BOUNDS_OPT, SPECTRAL_NORMALIZATION, EXAMPLE)
-        plot_losses(train_losses, val_losses, it)
+        save_bests(it, Data, Params, EXAMPLE)
+        plot_losses(it, Data)
         
         # Predict MC responses (only the sample which are not contained in the Kriging yet)
-        x_candidate_normalized = min_max_normalization(x_max, x_min, x_candidate)
-        preds = MC_prediction(model, likelihood, x_candidate_normalized)
+        x_candidate_normalized = min_max_normalization(Data.x_max, Data.x_min, Data.x_candidate)
+        preds = predict(Data, x_candidate_normalized)
         
         # Evaluate learning function
         g_mean, gs, ind_lf = evaluate_lf(preds, learning_function)
         
         # Select additional sample (the sample which maximizes the learning function value)
-        x_added = add_x(x_candidate, ind_lf, it, EXAMPLE)
+        x_added = add_x(Data.x_candidate, ind_lf, it, EXAMPLE)
         
         # Estimate Pf
-        Pf, Pf_plus, Pf_minus = estimate_Pf(g, g_mean, gs, N, N_MC, ALPHA)
+        Pf, Pf_plus, Pf_minus = estimate_Pf(Data.g, g_mean, gs, Params)
         
+        # Append results
         estimate_Pf_all.append(Pf)
         estimate_Pf_allp.append(Pf_plus)
         estimate_Pf_allm.append(Pf_minus)
         estimate_N_samples_added.append(N_samples_added_total)
         
         # Print some info
-        print_info(N, N_INFILL, it, Pf, Pf_plus, Pf_minus)
+        print_info(Params, it, Pf, Pf_plus, Pf_minus)
         
         # Check if maximum number of points were added
-        if N_samples_added_total >= N_INFILL: break
+        if N_samples_added_total >= Params.n_infill: break
         it += 1
         
         # Convergence criterion
         if converged and N_samples_added_total != 0:
-            if convergence_function(g, g_mean, gs, N, N_MC): break
+            if convergence_function(Data.g, g_mean, gs, Params): break
             converged = False
         else:
-            converged = convergence_function(g, g_mean, gs, N, N_MC)
+            converged = convergence_function(Data.g, g_mean, gs, Params)
         
+        # Limit state function evaluation
         g_added = evaluate_g(x_added, it, limit_state_function, EXAMPLE)
         
-        x = torch.cat((x, x_added), 0)
-        g = torch.cat((g, g_added), 0)
-        x_candidate = torch.cat((x_candidate[:ind_lf], x_candidate[ind_lf+1:]))
+        # Adjust sampling plans
+        Data.x = torch.cat((Data.x, x_added), 0)
+        Data.g = torch.cat((Data.g, g_added), 0)
+        Data.x_candidate = torch.cat((Data.x_candidate[:ind_lf], Data.x_candidate[ind_lf+1:]))
         N_samples_added_total = N_samples_added_total + 1
         
     # Store results
     # Estimate failure probability
-    estimate_Pf_0 = (torch.sum(g_mean <= 0) + torch.sum(g[N+1:] <= 0))/N_MC
+    estimate_Pf_0 = estimate_Pf_all[-1]
 
     # Estimate the covariance
-    estimate_CoV = torch.sqrt((1-estimate_Pf_0) / estimate_Pf_0 / N_MC)
+    estimate_CoV = torch.sqrt((1-estimate_Pf_0) / estimate_Pf_0 / Params.reliability.n)
 
     # Store the results
     Results = {
         'Pf': estimate_Pf_0,
         'Beta': -ndtri(estimate_Pf_0),
         'CoV': estimate_CoV,
-        'Model_Evaluations': N_samples_added_total + N,
+        'Model_Evaluations': N_samples_added_total + Params.config.n_initial,
         'Pf_CI': estimate_Pf_0 * np.array([
-            1 + ndtri(ALPHA/2)*estimate_CoV,
-            1 + ndtri(1-ALPHA/2)*estimate_CoV
+            1 + ndtri(Params.reliability.alpha/2)*estimate_CoV,
+            1 + ndtri(1-Params.reliability.alpha/2)*estimate_CoV
             ]),
         }
     Results['Beta_CI'] = torch.flip(-ndtri(Results['Pf_CI']), [0])
@@ -111,10 +117,10 @@ def AL(data, params, hyperparams, optparams):
         'Pf_Upper': estimate_Pf_allp,
         'Pf_Lower': estimate_Pf_allm,
         'N_Samples': estimate_N_samples_added,
-        'N_Init': N,
-        'X': x,
-        'G': g,
-        'MC_Sample': x_candidate,
+        'N_Init': Params.config.n_initial,
+        'X': Data.x,
+        'G': Data.g,
+        'MC_Sample': Data.x_candidate,
     }
 
     data2save = {

@@ -3,48 +3,33 @@ from core.K_fold_CV import kfold_train
 from core.hyper_params_opt import optimization_variables
 
 
-def obj_fun(xx, x, g, x_candidate, N, N_MC, ALPHA, BOUNDS_BAY_OPT, SPECTRAL_NORMALIZATION, VALIDATION_SPLIT,
-            TRAINING_ITERATIONS, LEARNING_RATE, SEED, Params):
-    """
-    Inputs:
-        L -> number of layers
-        r -> size of the latent layer
-    Output:
-        Best K-Fold validation
-    """
-    
+def obj_fun(xx, Data, Params):
+    """Outputs: Best K-Fold validation and its Runtime Data"""
     if len(xx.shape) == 1:
         xx = torch.reshape(xx, (1, xx.shape[0]))
     
     fobj_all = torch.zeros((xx.shape[0]))
-    best_loss = 1e2
+    best_loss = 1e4
     
     for idx, X in enumerate(xx):
-        layer_sizes, act_fun = optimization_variables(BOUNDS_BAY_OPT, X, x, SPECTRAL_NORMALIZATION)
+        Data.x_opt = X
+        layer_sizes, act_fun = optimization_variables(Data, Params)
 
-        print(f'Hyperparameters: {layer_sizes}, SN: {SPECTRAL_NORMALIZATION}, act_fun: {act_fun.__name__}')
+        print(f'Hyperparameters: {layer_sizes}, \
+SN: {Params.surrogate.spectral_normalization}, \
+act_fun: {act_fun.__name__}')
         
         # Train the model with the sampled hyperparameters
-        fobj, loss, model, likelihood, train_losses, val_losses, train_x, val_x, train_g, val_g, x_max, x_min, fold = \
-            kfold_train(
-            x, g, x_candidate, TRAINING_ITERATIONS, LEARNING_RATE, layer_sizes, act_fun, \
-                N, N_MC, ALPHA, SPECTRAL_NORMALIZATION, Params, n_splits=VALIDATION_SPLIT, SEED=SEED
-            )
+        fobj, fold, KData = kfold_train(layer_sizes, act_fun, Data, Params)
 
         print(f'obj fun (avg loss): {fobj:.2f} -> best fold: {fold}\n\n')
         
         fobj_all[idx] = fobj
         
         if fobj < best_loss:
-            if best_loss < 1e2:
+            if best_loss < 1e4:
                 print(f'New best found at OFE {idx}')
             best_loss = fobj
-            best_model = model
-            best_likelihood = likelihood
-            best_train_losses = train_losses
-            best_val_losses = val_losses
-            best_train_x, best_val_x, best_train_g, best_val_g = train_x, val_x, train_g, val_g
-            best_x_max, best_x_min = x_max, x_min
+            Data = KData
 
-    return fobj_all, best_model, best_likelihood, best_train_losses, best_val_losses, \
-        best_train_x, best_val_x, best_train_g, best_val_g, best_x_max, best_x_min
+    return fobj_all, Data

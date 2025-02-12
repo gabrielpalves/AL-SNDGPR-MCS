@@ -2,7 +2,8 @@ import torch
 import numpy as np
 from scipy.stats import norm, rayleigh
 
-def sampling_plan(size, variable_specs):
+
+def sampling_plan(variable_specs, size):
     # Number of variables and sampling points
     size = int(size)
 

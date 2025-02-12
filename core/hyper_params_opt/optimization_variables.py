@@ -1,19 +1,24 @@
 import numpy as np
 from torch.nn import ReLU, ELU, Tanh, Sigmoid, GELU
+from torch import argmin
 
+def optimization_variables(Data, Params):
+    x_opt = Data.x_opt
+    if x_opt.shape[0] > 1:
+        x_opt = x_opt[argmin(Data.f_opt), :]
 
-def optimization_variables(BOUNDS_BAY_OPT, X, x, SPECTRAL_NORMALIZATION=True):
-    """
-    BOUNDS_BAY_OPT -> bounds for bayesian optimization (EGO)
-    X -> variables from EGO (hyperparameters optimization)
-    x -> sampling plan of EGRA (AL-SNDGPR-MCS)
-    """
-    L, r, act_fun = X[:len(BOUNDS_BAY_OPT)]
+    L = x_opt[0]
+    r = x_opt[1]
+    act_fun = 0
+    if x_opt.shape[0] > 2:
+        act_fun = x_opt[2]
+    
+    bounds = Params.optimization.bounds_opt
         
     # BOUNDS
-    L = L*(BOUNDS_BAY_OPT[0][1] - BOUNDS_BAY_OPT[0][0]) + BOUNDS_BAY_OPT[0][0]
-    r = r*(BOUNDS_BAY_OPT[1][1] - BOUNDS_BAY_OPT[1][0]) + BOUNDS_BAY_OPT[1][0]
-    act_fun = act_fun*(BOUNDS_BAY_OPT[2][1] - BOUNDS_BAY_OPT[2][0]) + BOUNDS_BAY_OPT[2][0]
+    L = L*(bounds[0][1] - bounds[0][0]) + bounds[0][0]
+    r = r*(bounds[1][1] - bounds[1][0]) + bounds[1][0]
+    act_fun = act_fun*(bounds[2][1] - bounds[2][0]) + bounds[2][0]
     
     r = int(np.round(r))
     L = int(np.round(L))
@@ -31,7 +36,7 @@ def optimization_variables(BOUNDS_BAY_OPT, X, x, SPECTRAL_NORMALIZATION=True):
 
     # Randomly sample hyperparameters
     layer_sizes = []
-    D = x.shape[1]  # dimension of the problem
+    D = Data.x.shape[1]  # dimension of the problem
     rho = np.log(r/D) / L
     for i in range(1, L+1):
         layer_sizes.append(int(D * np.exp(rho * i)))  # Eq. 20

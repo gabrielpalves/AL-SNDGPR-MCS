@@ -1,24 +1,31 @@
 from sklearn.model_selection import KFold
-from .utils import min_max_normalization, load_core_modules
-from core.SNDGPR.train import train_model
-from core.MCS import MC_prediction, estimate_Pf
+from .utils.import_utils import load_surrogate_modules
+from .utils.sampling_utils import min_max_normalization, keep_best
+from core.configs import RuntimeData
 
 
-def kfold_train(x, g, x_candidate, epochs, lr, layer_sizes, activation_fn,
-                N, N_MC, ALPHA, SPECTRAL_NORMALIZATION, Params, n_splits=6, SEED=42):
+def kfold_train(layer_sizes, act_fun, Data, Params):
     
-    _, learning_function, evaluate_lf, _ = load_core_modules(
-    Params['initial_sampling_plan'], Params['learning_function'], Params['convergence_function']
-)
+    _, train_model = load_surrogate_modules(Params)
+    n_splits = Params.surrogate.validation_split
     
-    kf = KFold(n_splits=n_splits, shuffle=True, random_state=SEED)
+    kf = KFold(
+        n_splits=n_splits,
+        shuffle=True,
+        random_state=Params.config.seed
+        )
+    
+    KData = RuntimeData(
+        x=Data.x,
+        g=Data.g
+        )
     
     avg_losses = []
     it = 0
-    
     best_loss = 1e8
 
     # Split data into training and validation using KFold
+    x, g = KData.x, KData.g
     for train_idx, val_idx in kf.split(x):
         it += 1
         # Training and validation sets
@@ -32,16 +39,16 @@ def kfold_train(x, g, x_candidate, epochs, lr, layer_sizes, activation_fn,
         x_min = train_x.min(dim=0)[0]
         train_x = min_max_normalization(x_max, x_min, train_x)
         val_x = min_max_normalization(x_max, x_min, val_x)
-        x_candidate_normalized = min_max_normalization(x_max, x_min, x_candidate)
+        
+        KData.train_x, KData.val_x, KData.train_g, KData.val_g = train_x, val_x, train_g, val_g
+        KData.x_min, KData.x_max = x_min, x_max
 
         # Train the model using the training set
         success, attempts, max_attempts = False, 0, 2
         while not success and attempts < max_attempts:
             try:
-                model, likelihood, avg_loss, model_training_losses, model_validation_losses \
-                    = train_model(
-                    train_x, train_g, val_x, val_g, epochs, lr, layer_sizes, activation_fn, \
-                        SPECTRAL_NORMALIZATION)
+                model, likelihood, avg_loss, train_losses, val_losses \
+                    = train_model(Data, Params)
                 success = True  # Training was successful, exit loop
                 print(f"  Training succeeded after {attempts + 1} attempt(s).")
             except Exception as e:
@@ -51,41 +58,21 @@ def kfold_train(x, g, x_candidate, epochs, lr, layer_sizes, activation_fn,
 
                 if attempts >= max_attempts:
                     print("  Max retry attempts reached. Training failed.")
-                    # Optionally, continue with the next fold if training fails
                     success = False
                     break
         
         if not success:
             continue
-        
-        # Predict MC responses (only the sample which are not contained in the Kriging yet)
-        preds = MC_prediction(model, likelihood, x_candidate_normalized)
-        
-        # Evaluate learning function
-        g_mean, gs, _ = evaluate_lf(preds, learning_function)
-        
-        # Estimate Pf
-        Pf, Pf_plus, Pf_minus = estimate_Pf(g, g_mean, gs, N, N_MC, ALPHA)
 
         # Update best model
-        delta = (Pf_plus - Pf_minus)/Pf
-        print(f'avg. loss = {avg_loss:.4f}, delta = {delta*100:.2f}%, Pf: [{Pf_plus}, {Pf}, {Pf_minus}]')
-        
-        if avg_loss < best_loss and Pf_plus > 1e-4:
-            print(f'New best model found at fold {it}:')
-            print(f'    delta = {delta*100:.2f}%, avg. loss = {avg_loss:.4f}')
-            print(f'    layer_sizes: {layer_sizes}, act fun: {activation_fn}\n')
-            best_loss = avg_loss
-            best_val_losses = model_validation_losses
-            best_train_losses = model_training_losses
-            best_model = model
-            best_likelihood = likelihood
-            best_train_x = train_x
-            best_val_x = val_x
-            best_train_g = train_g
-            best_val_g = val_g
-            best_x_max, best_x_min = x_max, x_min
-            best_fold = it
+        print(f'avg loss = {avg_loss:.4f}')
+        if avg_loss < best_loss:
+            print(f'  New best model found at fold {it}:')
+            print(f'    layer sizes: {layer_sizes}, act fun: {act_fun}\n')
+            best_loss, best_fold = avg_loss, it
+            KData.model, KData.likelihood = model, likelihood
+            KData.train_losses, KData.val_losses = train_losses, val_losses
+            Data = keep_best(Data, KData)
 
         avg_losses.append(avg_loss)
         print(f'Fold: {it}, Avg. Loss: {avg_loss}\n')
@@ -97,5 +84,4 @@ def kfold_train(x, g, x_candidate, epochs, lr, layer_sizes, activation_fn,
     avg_avg_loss = sum(avg_losses) / n_splits
     print(f'Average Loss across {n_splits} folds: {avg_avg_loss}\n')
     
-    return avg_avg_loss, best_loss, best_model, best_likelihood, best_train_losses, best_val_losses, \
-        best_train_x, best_val_x, best_train_g, best_val_g, best_x_max, best_x_min, best_fold
+    return avg_avg_loss, best_fold, Data
