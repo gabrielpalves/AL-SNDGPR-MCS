@@ -23,7 +23,7 @@ def train_model(Data, Params, opt=True):
     likelihood = GaussianLikelihood()
     model = GPRegressionModel(train_x=train_x, train_y=train_g, likelihood=likelihood)
     
-    folder_path = os.path.join(EXAMPLE, "data/best_models/temp")
+    folder_path = os.path.join("examples", EXAMPLE, "data", "best_models", "temp")
     os.makedirs(folder_path, exist_ok=True)  # Create the folder if it doesn't exist
     model_path = os.path.join(folder_path, f'best_model_and_likelihood_GPR.pth')
 

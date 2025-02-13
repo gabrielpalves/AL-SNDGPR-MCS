@@ -32,7 +32,7 @@ optimization = OptimizationParams(
     n_infill_ego=2,
     dim_ego=3,
     training_iterations_ego=10000,
-    learning_rate=0.005,
+    learning_rate_ego=0.005,
     bsa_popsz=20,
     bsa_epoch=1000
 )

@@ -17,7 +17,8 @@ def kfold_train(layer_sizes, act_fun, Data, Params):
     
     KData = RuntimeData(
         x=Data.x,
-        g=Data.g
+        g=Data.g,
+        x_opt=Data.x_opt
         )
     
     avg_losses = []
@@ -48,7 +49,7 @@ def kfold_train(layer_sizes, act_fun, Data, Params):
         while not success and attempts < max_attempts:
             try:
                 model, likelihood, avg_loss, train_losses, val_losses \
-                    = train_model(Data, Params)
+                    = train_model(KData, Params)
                 success = True  # Training was successful, exit loop
                 print(f"  Training succeeded after {attempts + 1} attempt(s).")
             except Exception as e:

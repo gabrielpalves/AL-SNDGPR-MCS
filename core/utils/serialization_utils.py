@@ -7,7 +7,7 @@ from core.hyper_params_opt.optimization_variables import optimization_variables
 
 # Functions related to saving and loading data using pickle
 def pickle_save(data_dict, EXAMPLE):
-    folder_path = os.path.join(EXAMPLE, "data")
+    folder_path = os.path.join("examples", EXAMPLE, "data")
     os.makedirs(folder_path, exist_ok=True)
     for key, data in data_dict.items():
         file_path = os.path.join(folder_path, f'{key}.pkl')
@@ -16,7 +16,7 @@ def pickle_save(data_dict, EXAMPLE):
 
 
 def pickle_load(EXAMPLE, keys):
-    folder_path = os.path.join(EXAMPLE, "data")
+    folder_path = os.path.join("examples", EXAMPLE, "data")
     loaded_data = {}
     for key in keys:
         file_path = os.path.join(folder_path, f'{key}.pkl')
@@ -27,7 +27,7 @@ def pickle_load(EXAMPLE, keys):
 
 def save_bests(it, Data, Params, EXAMPLE):
     # Define the folder path for saving files
-    folder_path = os.path.join(EXAMPLE, "data/best_models")
+    folder_path = os.path.join("examples", EXAMPLE, "data", "best_models")
     os.makedirs(folder_path, exist_ok=True)  # Create the folder if it doesn't exist
 
     # Save the model state using torch
@@ -40,7 +40,7 @@ def save_bests(it, Data, Params, EXAMPLE):
     layer_sizes, act_fun \
         = optimization_variables(Data, Params)
 
-    folder_path = os.path.join(EXAMPLE, "data/variables")
+    folder_path = os.path.join("examples", EXAMPLE, "data", "variables")
     os.makedirs(folder_path, exist_ok=True)  # Create the folder if it doesn't exist
 
     # Save the .mat file inside the example's data folder

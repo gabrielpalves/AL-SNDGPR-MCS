@@ -16,7 +16,7 @@ def load_core_modules(Params):
 
 def load_surrogate_modules(Params):
     predict_module = importlib.import_module(f"core.surrogate.{Params.surrogate.model}.prediction")
-    predict = getattr(predict_module, "prediction")
+    predict = getattr(predict_module, "predict")
     
     train_module = importlib.import_module(f"core.surrogate.{Params.surrogate.model}.train")
     train = getattr(train_module, "train_model")
@@ -39,7 +39,7 @@ def load_reliability_modules(Params):
     estimate_Pf = getattr(estimate_pf_module, "estimate_Pf")
     
     sampling_plan_module = importlib.import_module(
-        f"core.surrogate.{Params.reliability.method}.sampling_plan")
+        f"core.reliability.{Params.reliability.method}.sampling_plan")
     sampling_plan = getattr(sampling_plan_module, "sampling_plan")
     
     return estimate_Pf, sampling_plan

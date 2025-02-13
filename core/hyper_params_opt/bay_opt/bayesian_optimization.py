@@ -117,7 +117,7 @@ def bayesian_optimization(Data, Params):
 
     # FINAL RESULT OF BAYESIAN OPTIMIZATION
     Data.x_opt, Data.f_opt = x_EGO, f_EGO
-    layer_sizes, act_fun = optimization_variables(Data, Params)
+    layer_sizes, act_fun = optimization_variables(Data, Params, get_best=True)
 
     print(f'Loss: {torch.min(f_EGO):.2f}')
     print(f'SN: {spectral_normalization}')

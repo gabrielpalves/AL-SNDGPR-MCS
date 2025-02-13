@@ -1,6 +1,6 @@
 import torch
 from core.K_fold_CV import kfold_train
-from core.hyper_params_opt import optimization_variables
+from core.hyper_params_opt.optimization_variables import optimization_variables
 
 
 def obj_fun(xx, OptData, Params):

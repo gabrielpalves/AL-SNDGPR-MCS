@@ -11,15 +11,16 @@ from core.utils.serialization_utils import save_bests, pickle_save
 from core.utils.plot_utils import plot_losses, print_info
 from core.utils.import_utils import load_core_modules, load_example_modules, \
     load_surrogate_modules, load_reliability_modules, load_optimization_modules
+from core.learning_function import evaluate_lf
 from core.configs import RuntimeData
 
 
 def AL(EXAMPLE):
     # Load important modules
     RVs, limit_state_function, Params = load_example_modules(EXAMPLE)
-    initial_sampling_plan, learning_function, evaluate_lf, convergence_function \
+    initial_sampling_plan, learning_function, convergence_function \
         = load_core_modules(Params)
-    predict, train = load_surrogate_modules(Params)
+    predict, _ = load_surrogate_modules(Params)
     estimate_Pf, sampling_plan = load_reliability_modules(Params)
     hyper_params_opt = load_optimization_modules(Params)
     
@@ -41,11 +42,12 @@ def AL(EXAMPLE):
     torch.backends.cudnn.benchmark = False
     
     # Initiate samples
+    Data = RuntimeData()
     Data.x = initial_sampling_plan(RVs, Params.config.n_initial, Params.config.seed)
     Data.x_candidate = sampling_plan(RVs, Params.reliability.n)  # sampling plan to predict
+    Data.g = limit_state_function(Data.x)
 
     # Define important variables
-    Data = RuntimeData()
     data_dim = Data.x.shape[1]
     estimate_Pf_all = []
     estimate_Pf_allp = []
@@ -62,9 +64,9 @@ def AL(EXAMPLE):
         if it == 0:  # optimize hyperparameters
             Data = hyper_params_opt(Data, Params)
         else:  # use already optimized hyperparameters
-            layer_sizes, act_fun = optimization_variables(Data, Params)
-            _, _, Data = kfold_train(layer_sizes, act_fun, train, Data, Params)
-        
+            layer_sizes, act_fun = optimization_variables(Data, Params, get_best=True)
+            _, _, Data = kfold_train(layer_sizes, act_fun, Data, Params)
+
         # Save variables and plot loss
         save_bests(it, Data, Params, EXAMPLE)
         plot_losses(it, Data)

@@ -5,13 +5,13 @@ import torch
 # Active Learning Pipeline Configuration
 @dataclass
 class Config:
-    example: Optional[str] = 'example1'
-    seed: int
+    example: str
     sampling_plan_strategy: str
     learning_function: str
     convergence_function: str
     n_initial: int
     n_infill: int
+    seed: Optional[int] = 42
 
 # Reliability and Prediction Parameters
 @dataclass
@@ -39,7 +39,6 @@ class OptimizationParams:
     dim_ego: Optional[int]
     training_iterations_ego: Optional[int]
     learning_rate_ego: Optional[float]
-    bounds_bsa: Optional[tuple]
     bsa_popsz: Optional[int]
     bsa_epoch: Optional[int]
 
@@ -68,5 +67,5 @@ class RuntimeData:
 class Params:
     config: Config
     reliability: ReliabilityParams
-    training: SurrogateParams
+    surrogate: SurrogateParams
     optimization: OptimizationParams
