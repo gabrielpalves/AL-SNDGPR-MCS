@@ -24,6 +24,15 @@ def load_surrogate_modules(Params):
     return predict, train
 
 
+def load_optimization_modules(Params):
+    opt_module = importlib.import_module(
+        f"core.hyper_params_opt.{Params.optimization.opt_type}.grid_search"
+        )
+    opt_type = getattr(opt_module, "grid_search")
+    
+    return opt_type
+
+
 def load_reliability_modules(Params):
     estimate_pf_module = importlib.import_module(
         f"core.reliability.{Params.reliability.method}.estimate_pf")
