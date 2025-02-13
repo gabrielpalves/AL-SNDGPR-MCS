@@ -1,15 +1,16 @@
+import random
+
 import torch
 import numpy as np
 from scipy.special import ndtri
 
-from core.hyper_params_opt.bay_opt import bayesian_optimization
 from core.hyper_params_opt.optimization_variables import optimization_variables
 from core.K_fold_CV import kfold_train
 from core.utils.sampling_utils import min_max_normalization, add_x, evaluate_g
 from core.utils.serialization_utils import save_bests, pickle_save
 from core.utils.plot_utils import plot_losses, print_info
 from core.utils.import_utils import load_core_modules, load_example_modules, \
-    load_surrogate_modules, load_reliability_modules
+    load_surrogate_modules, load_reliability_modules, load_optimization_modules
 from core.configs import RuntimeData
 
 
@@ -20,6 +21,24 @@ def AL(EXAMPLE):
         = load_core_modules(Params)
     predict, train = load_surrogate_modules(Params)
     estimate_Pf, sampling_plan = load_reliability_modules(Params)
+    hyper_params_opt = load_optimization_modules(Params)
+    
+    # Set seed for reproducibility
+    SEED = Params.config.seed
+    # For NumPy
+    np.random.seed(SEED)
+
+    # For PyTorch
+    torch.manual_seed(SEED)
+    torch.cuda.manual_seed(SEED)
+    torch.cuda.manual_seed_all(SEED)  # if you are using multi-GPU
+
+    # For Python's built-in random module
+    random.seed(SEED)
+
+    # Ensuring reproducibility in cuDNN using PyTorch
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
     
     # Initiate samples
     Data.x = initial_sampling_plan(RVs, Params.config.n_initial, Params.config.seed)
@@ -40,8 +59,8 @@ def AL(EXAMPLE):
     while True:
         print(f'\nIteration {it}')
         
-        if it == 0:  # optimize
-            Data = bayesian_optimization(Data, Params)
+        if it == 0:  # optimize hyperparameters
+            Data = hyper_params_opt(Data, Params)
         else:  # use already optimized hyperparameters
             layer_sizes, act_fun = optimization_variables(Data, Params)
             _, _, Data = kfold_train(layer_sizes, act_fun, train, Data, Params)

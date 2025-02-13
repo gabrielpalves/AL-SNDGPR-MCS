@@ -1,9 +1,8 @@
 import torch
-import numpy as np
 from sklearn.model_selection import train_test_split
 
 from core.initial_sampling_plan import LHS
-from core.hyper_params_opt.bay_opt.objective_function import obj_fun
+from core.hyper_params_opt.objective_function import obj_fun
 from core.hyper_params_opt.bay_opt.bsa import bsa
 from core.hyper_params_opt.bay_opt.expected_improvement import expected_improvement
 from core.hyper_params_opt.optimization_variables import optimization_variables
