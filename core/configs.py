@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import List, Optional, Callable
 import torch
 
 # Active Learning Pipeline Configuration
@@ -39,8 +39,6 @@ class OptimizationParams:
     dim_ego: Optional[int]
     training_iterations_ego: Optional[int]
     learning_rate_ego: Optional[float]
-    bsa_popsz: Optional[int]
-    bsa_epoch: Optional[int]
 
 #########
 # Data generated in the pipeline
@@ -53,6 +51,8 @@ class RuntimeData:
     x_opt: Optional[torch.Tensor] = None
     model: Optional[torch.nn.Module] = None
     likelihood: Optional[object] = None
+    layer_sizes: Optional[List[int]] = None
+    act_fun: Optional[Callable] = torch.nn.ReLU
     train_losses: Optional[List[float]] = None
     val_losses: Optional[List[float]] = None
     train_x: Optional[torch.Tensor] = None

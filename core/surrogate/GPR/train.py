@@ -115,6 +115,9 @@ def train_model(Data, Params, opt=True):
     # Set model and likelihood to eval mode for further evaluation
     model.eval()
     likelihood.eval()
+    
+    Data.model, Data.likelihood = model, likelihood
+    Data.train_losses, Data.val_losses = training_losses, validation_losses
 
     # Plot training and validation loss
     # plt.figure(figsize=(4, 2))
@@ -127,4 +130,4 @@ def train_model(Data, Params, opt=True):
     # plt.grid(True)
     # plt.show()
 
-    return model, likelihood, best_loss, training_losses, validation_losses
+    return best_loss, Data

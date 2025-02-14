@@ -64,8 +64,8 @@ def AL(EXAMPLE):
         if it == 0:  # optimize hyperparameters
             Data = hyper_params_opt(Data, Params)
         else:  # use already optimized hyperparameters
-            layer_sizes, act_fun = optimization_variables(Data, Params, get_best=True)
-            _, _, Data = kfold_train(layer_sizes, act_fun, Data, Params)
+            Data = optimization_variables(Data, Params, get_best=True)
+            _, _, Data = kfold_train(Data, Params)
 
         # Save variables and plot loss
         save_bests(it, Data, Params, EXAMPLE)
@@ -94,7 +94,7 @@ def AL(EXAMPLE):
         print_info(Params, it, Pf, Pf_plus, Pf_minus)
         
         # Check if maximum number of points were added
-        if N_samples_added_total >= Params.n_infill: break
+        if N_samples_added_total >= Params.config.n_infill: break
         it += 1
         
         # Convergence criterion

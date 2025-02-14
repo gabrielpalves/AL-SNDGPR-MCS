@@ -49,4 +49,6 @@ def optimization_variables(Data, Params, get_best=False):
     # decreasing number of neurons per layer in architecture
     layer_sizes.sort(reverse=True)
 
-    return layer_sizes, act_fun
+    Data.layer_sizes, Data.act_fun = layer_sizes, act_fun
+
+    return Data

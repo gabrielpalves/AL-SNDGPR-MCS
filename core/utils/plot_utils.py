@@ -31,12 +31,12 @@ def results_print(Results, History, Params):
     print(f'Beta: {Beta:.3f}')
     print(f'CoV: {CoV:4f}')
 
-def plot_losses(Data, it):
+def plot_losses(it, Data):
     plt.figure(figsize=(16, 10), dpi=300)
     font_size = 32
     plt.rcParams.update({'font.size': font_size})
     plt.rcParams["font.family"] = "Times New Roman"
-    tloss, vloss = np.array(tloss), np.array(vloss)
+    tloss, vloss = np.array(Data.train_losses), np.array(Data.val_losses)
     plt.plot(tloss, label='Training Loss', color='blue', linewidth=3)
     plt.plot(vloss, label='Validation Loss', color='red', linestyle="--", linewidth=3)
     

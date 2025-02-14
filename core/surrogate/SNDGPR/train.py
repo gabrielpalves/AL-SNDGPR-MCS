@@ -21,7 +21,7 @@ def train_model(Data, Params, opt=False):
         training_iterations = Params.optimization.training_iterations_ego
         lr = Params.optimization.learning_rate_ego
 
-    layer_sizes, act_fun = optimization_variables(Data, Params)
+    layer_sizes, act_fun = Data.layer_sizes, Data.act_fun
 
     EXAMPLE = Params.config.example
 
@@ -129,6 +129,9 @@ def train_model(Data, Params, opt=False):
     # Set model and likelihood to eval mode for further evaluation
     model.eval()
     likelihood.eval()
+    
+    Data.model, Data.likelihood = model, likelihood
+    Data.train_losses, Data.val_losses = training_losses, validation_losses
 
     # Plot training and validation loss
     # plt.figure(figsize=(10, 5))
@@ -141,4 +144,4 @@ def train_model(Data, Params, opt=False):
     # plt.grid(True)
     # plt.show()
 
-    return model, likelihood, best_loss, training_losses, validation_losses
+    return best_loss, Data

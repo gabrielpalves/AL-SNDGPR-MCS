@@ -37,15 +37,14 @@ def save_bests(it, Data, Params, EXAMPLE):
         'likelihood_state_dict': Data.likelihood.state_dict(),
     }, torch_model_likelihood_path)
 
-    layer_sizes, act_fun \
-        = optimization_variables(Data, Params)
+    Data = optimization_variables(Data, Params, get_best=True)
 
     folder_path = os.path.join("examples", EXAMPLE, "data", "variables")
     os.makedirs(folder_path, exist_ok=True)  # Create the folder if it doesn't exist
 
     # Save the .mat file inside the example's data folder
-    file_name = 'variables_best_' + act_fun.__name__ \
-        + '_SN_' + str(Params.hyperparameters.spectral_normalization) \
+    file_name = 'variables_best_' + Data.act_fun.__name__ \
+        + '_SN_' + str(Params.surrogate.spectral_normalization) \
         + str(it) + '.mat'
     full_path = os.path.join(folder_path, file_name)
 
@@ -54,7 +53,7 @@ def save_bests(it, Data, Params, EXAMPLE):
         'validation_losses': np.array(Data.val_losses),
         'x_opt': Data.x_opt.numpy(),
         'f_opt': Data.f_opt.numpy(),
-        'layer_sizes': np.array(layer_sizes),
+        'layer_sizes': np.array(Data.layer_sizes),
         'train_x': np.array(Data.train_x),
         'val_x': np.array(Data.val_x),
         'train_g': np.array(Data.train_g),

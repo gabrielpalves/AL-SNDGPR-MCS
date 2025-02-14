@@ -13,14 +13,14 @@ def obj_fun(xx, OptData, Params):
     
     for idx, X in enumerate(xx):
         OptData.x_opt = X
-        layer_sizes, act_fun = optimization_variables(OptData, Params)
+        OptData = optimization_variables(OptData, Params)
 
-        print(f'Hyperparameters: {layer_sizes}, \
+        print(f'Hyperparameters: {OptData.layer_sizes}, \
 SN: {Params.surrogate.spectral_normalization}, \
-act_fun: {act_fun.__name__}')
+act_fun: {OptData.act_fun.__name__}')
         
         # Train the model with the sampled hyperparameters
-        fobj, fold, KData = kfold_train(layer_sizes, act_fun, OptData, Params)
+        fobj, fold, KData = kfold_train(OptData, Params)
 
         print(f'obj fun (avg loss): {fobj:.2f} -> best fold: {fold}\n\n')
         

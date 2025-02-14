@@ -26,10 +26,10 @@ def update_model(x_EGO, f_EGO, data, params):
     """
     train_x, val_x, train_g, val_g = train_test_split(x_EGO, f_EGO, random_state=params.config.seed, test_size=0.20)
     data.train_x, data.val_x, data.train_g, data.val_g = train_x, val_x, train_g, val_g
-    model, likelihood, best_loss, _, _ = train_model_EGO(data, params)
-    model.eval()
-    likelihood.eval()
-    return model, likelihood, best_loss
+    best_loss, data = train_model_EGO(data, params)
+    data.model.eval()
+    data.likelihood.eval()
+    return best_loss, data
 
 def log_iteration_progress(it, f_EGO, best_loss):
     """
@@ -49,11 +49,19 @@ def bayesian_optimization(Data, Params):
     Data: Runtime data
     Params: Params specific to the example
     """
-    dim = Params.optimization.dim_ego
+    bounds = Params.optimization.bounds_opt
+    dim = len(bounds)
     n = Params.optimization.n_initial_ego
     n_infill = Params.optimization.n_infill_ego
-    bsa_popsz = Params.optimization.bsa_popsz
-    bsa_epoch = Params.optimization.bsa_epoch
+    
+    # Calculate BSA popsize and epoch:
+    ## Generate possible values for each variable based on bounds
+    possibilities = torch.Tensor([torch.arange(lb, ub + 1).sum() for lb, ub in bounds])
+    possibilities = torch.prod(possibilities)
+    
+    bsa_popsz = int(torch.log(possibilities) + 1)*2  # min. 2 of pop
+    bsa_epoch = int(possibilities / bsa_popsz + 2)
+    
     bsa_bounds = (tuple((0, 1) for _ in range(dim)))
 
     seed = Params.config.seed
@@ -74,7 +82,7 @@ def bayesian_optimization(Data, Params):
     Data = keep_best(Data, OptData)
 
     # Train model
-    model, likelihood, best_loss = update_model(x_EGO, f_EGO, OptData, Params)
+    best_loss, OptData = update_model(x_EGO, f_EGO, OptData, Params)
 
     it = 0
     log_iteration_progress(it, f_EGO, best_loss)
@@ -83,7 +91,7 @@ def bayesian_optimization(Data, Params):
 
         # Search for the maximum expected improvement
         new_point = bsa(expected_improvement, bounds=bsa_bounds,
-                        popsize=bsa_popsz, epoch=bsa_epoch, data=model)
+                        popsize=bsa_popsz, epoch=bsa_epoch, data=OptData.model)
         x_new = torch.from_numpy(new_point.x)
         # EI = new_point.y
 
@@ -106,7 +114,7 @@ def bayesian_optimization(Data, Params):
         f_EGO = torch.cat((f_EGO, f_new), 0)
 
         # Update model
-        model, likelihood, best_loss = update_model(x_EGO, f_EGO, OptData, Params)
+        best_loss, OptData = update_model(x_EGO, f_EGO, OptData, Params)
         log_iteration_progress(it, f_EGO, best_loss)
 
         # if abs(EI) < TOL_MIN_EI:
