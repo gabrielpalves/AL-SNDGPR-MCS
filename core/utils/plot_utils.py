@@ -63,7 +63,6 @@ def plot_losses(it, Data):
     plt.grid()
     plt.show()
     fig = plt.gcf()
-    fig.savefig('Loss' + str(it) + '.png', dpi=300)
 
 def print_info(Params, it, Pf, Pf_plus, Pf_minus):
     N = Params.config.n_initial

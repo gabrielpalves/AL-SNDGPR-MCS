@@ -47,7 +47,7 @@ def kfold_train(Data, Params):
         success, attempts, max_attempts = False, 0, 2
         while not success and attempts < max_attempts:
             try:
-                avg_loss, Data = train_model(KData, Params)
+                avg_loss, KData = train_model(KData, Params)
                 success = True  # Training was successful, exit loop
                 print(f"  Training succeeded after {attempts + 1} attempt(s).")
             except Exception as e:
