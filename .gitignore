@@ -4,7 +4,7 @@ __pycache__/
 *$py.class
 
 # Save data files
-data/
+data*/
 
 # C extensions
 *.so

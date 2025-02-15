@@ -11,15 +11,15 @@ def optimization_variables(Data, Params, get_best=False):
     L = x_opt[0]
     r = x_opt[1]
     act_fun = 0
-    if x_opt.shape[0] > 2:
-        act_fun = x_opt[2]
 
     bounds = Params.optimization.bounds_opt
 
     # BOUNDS
     L = L*(bounds[0][1] - bounds[0][0]) + bounds[0][0]
     r = r*(bounds[1][1] - bounds[1][0]) + bounds[1][0]
-    act_fun = act_fun*(bounds[2][1] - bounds[2][0]) + bounds[2][0]
+    if x_opt.shape[0] > 2:
+        act_fun = x_opt[2]
+        act_fun = act_fun*(bounds[2][1] - bounds[2][0]) + bounds[2][0]
 
     r = int(np.round(r))
     L = int(np.round(L))

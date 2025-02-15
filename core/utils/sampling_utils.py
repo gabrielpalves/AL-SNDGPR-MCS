@@ -16,7 +16,7 @@ def add_x(x_candidate, ind_lf, it, EXAMPLE):
     # x_added = x_added * (x_max - x_min) + x_min  # undo normalization
     
     numpy_array = x_added.numpy()
-    folder_path = os.path.join(EXAMPLE, "data/sampling_plan")
+    folder_path = os.path.join("examples", EXAMPLE, "data", "sampling_plan")
     os.makedirs(folder_path, exist_ok=True)
     full_path = os.path.join(folder_path, f'x{it}.mat')
     sio.savemat(full_path, {'x': numpy_array})
@@ -25,7 +25,7 @@ def add_x(x_candidate, ind_lf, it, EXAMPLE):
 
 def evaluate_g(x_added, it, limit_state_function, EXAMPLE):
     # Evaluate limit state function
-    folder_path = os.path.join(EXAMPLE, "data/sampling_plan")
+    folder_path = os.path.join("examples", EXAMPLE, "data", "sampling_plan")
     file_name = f'g{it-1}.mat'
     full_path = os.path.join(folder_path, file_name)
     if os.path.isfile(full_path):

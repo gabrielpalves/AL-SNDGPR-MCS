@@ -7,6 +7,7 @@ from datetime import datetime
 def results_plot(history, params):
     x = np.array(history["N_Samples"]) + params.config.n_initial
     y = np.array(history["Pf"])
+    plt.figure(figsize=(16, 10), dpi=300)
     plt.plot(x, y, label='Probability of Failure', color='blue', linewidth=2)
     plt.fill_between(x, history["Pf_Lower"], history["Pf_Upper"], color='gray', alpha=0.3)
     plt.xlabel('Model Evaluations')
