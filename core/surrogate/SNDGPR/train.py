@@ -11,6 +11,8 @@ from core.hyper_params_opt.optimization_variables import optimization_variables
 
 def train_model(Data, Params, opt=False):
     train_x, train_g, val_x, val_g = Data.train_x, Data.train_g, Data.val_x, Data.val_g
+    if torch.cuda.is_available():
+        train_x, train_y, val_x, val_g = train_x.cuda(), train_y.cuda(), val_x.cuda(), val_g.cuda()
     
     spectral_normalization = Params.surrogate.spectral_normalization
     
@@ -32,6 +34,10 @@ def train_model(Data, Params, opt=False):
                               layer_sizes=layer_sizes,
                               activation_fn=act_fun,
                               spectral_normalization=spectral_normalization)
+    
+    if torch.cuda.is_available():
+        model = model.cuda()
+        likelihood = likelihood.cuda()
 
     folder_path = os.path.join("examples", EXAMPLE, "data", "best_models", "temp")
     os.makedirs(folder_path, exist_ok=True)  # Create the folder if it doesn't exist
