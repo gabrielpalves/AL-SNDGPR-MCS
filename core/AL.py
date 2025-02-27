@@ -7,7 +7,7 @@ from scipy.special import ndtri
 from core.hyper_params_opt.optimization_variables import optimization_variables
 from core.K_fold_CV import kfold_train
 from core.utils.sampling_utils import min_max_normalization, add_x, evaluate_g
-from core.utils.serialization_utils import save_bests, pickle_save
+from core.utils.serialization_utils import save_load_initial, save_bests, pickle_save
 from core.utils.plot_utils import plot_losses, print_info
 from core.utils.import_utils import load_core_modules, load_example_modules, \
     load_surrogate_modules, load_reliability_modules, load_optimization_modules
@@ -45,7 +45,9 @@ def AL(EXAMPLE):
     Data = RuntimeData()
     Data.x = initial_sampling_plan(RVs, Params.config.n_initial, Params.config.seed)
     Data.x_candidate = sampling_plan(RVs, Params.reliability.n)  # sampling plan to predict
-    Data.g = limit_state_function(Data.x)
+    
+    # Evaluate/load initial sampling plan and optimize/load hyperparameters
+    Data = save_load_initial(EXAMPLE, Data, Params, limit_state_function, hyper_params_opt)
 
     # Define important variables
     data_dim = Data.x.shape[1]
@@ -61,19 +63,15 @@ def AL(EXAMPLE):
     while True:
         print(f'\nIteration {it}')
         
-        if it == 0:  # optimize hyperparameters
-            Data = hyper_params_opt(Data, Params)
-        else:  # use already optimized hyperparameters
-            Data = optimization_variables(Data, Params, get_best=True)
-            _, _, Data = kfold_train(Data, Params)
+        Data = optimization_variables(Data, Params, get_best=True)
+        _, _, Data = kfold_train(Data, Params)
 
         # Save variables and plot loss
         save_bests(it, Data, Params, EXAMPLE)
         plot_losses(it, Data)
         
         # Predict MC responses (only the sample which are not contained in the Kriging yet)
-        x_candidate_normalized = min_max_normalization(Data.x_max, Data.x_min, Data.x_candidate)
-        preds = predict(Data, x_candidate_normalized)
+        preds = predict(Data, min_max_normalization(Data.x_max, Data.x_min, Data.x_candidate))
         
         # Evaluate learning function
         g_mean, gs, ind_lf = evaluate_lf(preds, learning_function)
