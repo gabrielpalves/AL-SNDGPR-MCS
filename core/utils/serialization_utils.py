@@ -12,29 +12,29 @@ def save_load_initial(EXAMPLE, Data, Params, limit_state_function, hyper_params_
     folder_path = os.path.join("examples", EXAMPLE, "data", "initial")
     file = os.path.join(folder_path, 'Data.pkl')
     if os.path.exists(file):
-        with open(file, 'rb') as file:
-            loaded_Data = pickle.load(file)
+        with open(file, 'rb') as f:
+            loaded_Data = pickle.load(f)
             
             # Check hyperparameters optimization
-            if not loaded_Data.f_opt:
+            if loaded_Data.f_opt is None:
                 # Check initial sampling plan evaluation
-                if not loaded_Data.g:
+                if loaded_Data.g is None:
                     Data.g = limit_state_function(Data.x)
-                    with open(file, 'wb') as file: pickle.dump(Data, file)
+                    with open(file, 'wb') as f: pickle.dump(Data, f)
                 else:
                     Data = loaded_Data
                     
                 Data = hyper_params_opt(Data, Params)
                 Data.model, Data.likelihood, Data.act_fun = None, None, None
-                with open(file, 'wb') as file: pickle.dump(Data, file)
+                with open(file, 'wb') as f: pickle.dump(Data, f)
     else:
         os.makedirs(folder_path, exist_ok=True)  # Create the folder if it doesn't exist
         Data.g = limit_state_function(Data.x)
-        with open(file, 'wb') as file: pickle.dump(Data, file)
+        with open(file, 'wb') as f: pickle.dump(Data, f)
         
         Data = hyper_params_opt(Data, Params)
         Data.model, Data.likelihood, Data.act_fun = None, None, None
-        with open(file, 'wb') as file: pickle.dump(Data, file)
+        with open(file, 'wb') as f: pickle.dump(Data, f)
 
     return Data
 
