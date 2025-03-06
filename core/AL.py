@@ -47,7 +47,8 @@ def AL(EXAMPLE):
     Data.x_candidate = sampling_plan(RVs, Params.reliability.n)  # sampling plan to predict
     
     # Evaluate/load initial sampling plan and optimize/load hyperparameters
-    Data = save_load_initial(EXAMPLE, Data, Params, limit_state_function, hyper_params_opt)
+    # Data = save_load_initial(EXAMPLE, Data, Params, limit_state_function, hyper_params_opt)
+    Data.g = limit_state_function(Data.x)
 
     # Define important variables
     data_dim = Data.x.shape[1]
@@ -63,12 +64,14 @@ def AL(EXAMPLE):
     while True:
         print(f'\nIteration {it}')
         
-        Data = optimization_variables(Data, Params, get_best=True)
-        _, _, Data = kfold_train(Data, Params)
-
+        Data = hyper_params_opt(Data, Params)
+        
+        # Data = optimization_variables(Data, Params, get_best=True)
+        # _, _, Data = kfold_train(Data, Params)
+        
         # Save variables and plot loss
-        save_bests(it, Data, Params, EXAMPLE)
         plot_losses(it, Data)
+        save_bests(it, Data, Params, EXAMPLE)
         
         # Predict MC responses (only the sample which are not contained in the Kriging yet)
         preds = predict(Data, min_max_normalization(Data.x_max, Data.x_min, Data.x_candidate))
