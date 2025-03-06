@@ -97,7 +97,8 @@ def train_model(Data, Params, opt=False):
 
             # Save the best model based on validation and training loss
             training_loss = loss.item()
-            considered_loss = val_loss*0.5 + training_loss*0.5
+            # considered_loss = val_loss*0.5 + training_loss*0.5
+            considered_loss = val_loss*1.0
             if considered_loss < best_loss:
                 best_loss = considered_loss*1.0
                 best_val_loss = val_loss
