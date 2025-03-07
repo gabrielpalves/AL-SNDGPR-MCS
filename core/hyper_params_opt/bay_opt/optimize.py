@@ -44,7 +44,7 @@ def log_iteration_progress(it, f_EGO, best_loss):
 
 
 # -------------------- Bayesian Optimization --------------------
-def bayesian_optimization(Data, Params):
+def optimize(Data, Params):
     """
     Data: Runtime data
     Params: Params specific to the example

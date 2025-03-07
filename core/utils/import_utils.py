@@ -26,9 +26,9 @@ def load_surrogate_modules(Params):
 
 def load_optimization_modules(Params):
     opt_module = importlib.import_module(
-        f"core.hyper_params_opt.{Params.optimization.opt_type}.grid_search"
+        f"core.hyper_params_opt.{Params.optimization.opt_type}.optimize"
         )
-    opt_type = getattr(opt_module, "grid_search")
+    opt_type = getattr(opt_module, "optimize")
     
     return opt_type
 
@@ -43,6 +43,15 @@ def load_reliability_modules(Params):
     sampling_plan = getattr(sampling_plan_module, "sampling_plan")
     
     return estimate_Pf, sampling_plan
+
+
+def load_sensitivity_modules(Params):
+    sensitivity_module = importlib.import_module(
+        f"core.sensitivity.{Params.sensitivity.type}"
+        )
+    sensitivity_analysis = getattr(sensitivity_module, "sensitivity_analysis")
+    
+    return sensitivity_analysis
 
 
 def load_example_modules(example):

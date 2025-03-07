@@ -5,7 +5,7 @@ def U(g_mean, g_sigma):
     """U function"""
     return -torch.abs(g_mean / g_sigma)
 
-def evaluate_lf(preds, learning_function):
+def evaluate_lf(preds, learning_function=U):
     """Evaluate learning function for all predicted points"""
     g_mean = preds.mean
     gs2 = preds.variance
