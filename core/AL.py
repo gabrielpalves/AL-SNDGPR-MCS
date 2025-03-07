@@ -64,10 +64,14 @@ def AL(EXAMPLE):
     while True:
         print(f'\nIteration {it}')
         
-        Data = hyper_params_opt(Data, Params)
-        
-        # Data = optimization_variables(Data, Params, get_best=True)
-        # _, _, Data = kfold_train(Data, Params)
+        if Params.optimization.opt_inside_AL:
+            Data = hyper_params_opt(Data, Params)
+        else:
+            if it == 0:
+                Data = hyper_params_opt(Data, Params)
+            else:
+                Data = optimization_variables(Data, Params, get_best=True)
+                _, _, Data = kfold_train(Data, Params)
         
         # Save variables and plot loss
         plot_losses(it, Data)

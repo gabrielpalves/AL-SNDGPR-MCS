@@ -34,6 +34,7 @@ class SurrogateParams:
 class OptimizationParams:
     opt_type: str
     bounds_opt: list
+    opt_inside_AL: bool
     n_initial_ego: Optional[int]
     n_infill_ego: Optional[int]
     dim_ego: Optional[int]
