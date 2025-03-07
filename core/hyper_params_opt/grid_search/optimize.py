@@ -5,7 +5,7 @@ from core.utils.sampling_utils import keep_best
 from core.configs import RuntimeData
 
 
-def grid_search(Data, Params):  # Data, Params
+def optimize(Data, Params):  # Data, Params
     bounds = Params.optimization.bounds_opt
 
     # Generate possible values for each variable based on bounds

@@ -10,7 +10,8 @@ from core.utils.sampling_utils import min_max_normalization, add_x, evaluate_g
 from core.utils.serialization_utils import save_load_initial, save_bests, pickle_save
 from core.utils.plot_utils import plot_losses, print_info
 from core.utils.import_utils import load_core_modules, load_example_modules, \
-    load_surrogate_modules, load_reliability_modules, load_optimization_modules
+    load_surrogate_modules, load_reliability_modules, load_optimization_modules, \
+    load_sensitivity_modules
 from core.learning_function import evaluate_lf
 from core.configs import RuntimeData
 
@@ -23,6 +24,7 @@ def AL(EXAMPLE):
     predict, _ = load_surrogate_modules(Params)
     estimate_Pf, sampling_plan = load_reliability_modules(Params)
     hyper_params_opt = load_optimization_modules(Params)
+    sensitivity_analysis = load_sensitivity_modules(Params)
     
     # Set seed for reproducibility
     SEED = Params.config.seed
@@ -124,6 +126,9 @@ def AL(EXAMPLE):
 
     # Estimate the covariance
     estimate_CoV = torch.sqrt((1-estimate_Pf_0) / estimate_Pf_0 / Params.reliability.n)
+    
+    # Sensitivity analysis with the trained surrogate
+    sensitivity_results = sensitivity_analysis(RVs, Data, Params, predict, evaluate_lf)
 
     # Store the results
     Results = {
@@ -137,6 +142,7 @@ def AL(EXAMPLE):
             ]),
         }
     Results['Beta_CI'] = torch.flip(-ndtri(Results['Pf_CI']), [0])
+    Results['Sensitivity'] = sensitivity_results
 
     History = {
         'Pf': estimate_Pf_all,
