@@ -28,6 +28,7 @@ surrogate = SurrogateParams(
 optimization = OptimizationParams(
     opt_type='grid_search',
     bounds_opt=[[1, 5], [1, 5]],#, [0, 4]],  # L, r, act_fun
+    opt_inside_AL=True,
     n_initial_ego=20,
     n_infill_ego=10,
     dim_ego=3,
