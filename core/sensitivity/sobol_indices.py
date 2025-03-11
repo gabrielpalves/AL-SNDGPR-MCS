@@ -13,7 +13,7 @@ def sensitivity_analysis(RVs, Data, Params, predict, evaluate_lf):
         problem['bounds'].append([0, 1])  # assuming min-max scaling
 
     # Generate Sobol sequence samples using Saltelli’s method
-    n = Params.reliability.n
+    n = Params.sensitivity.n
     param_values = saltelli.sample(problem, n)
 
     # Evaluate the model

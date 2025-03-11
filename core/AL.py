@@ -76,7 +76,6 @@ def AL(EXAMPLE):
                 _, _, Data = kfold_train(Data, Params)
         
         # Save variables and plot loss
-        plot_losses(it, Data)
         save_bests(it, Data, Params, EXAMPLE)
         
         # Predict MC responses (only the sample which are not contained in the Kriging yet)
@@ -119,7 +118,10 @@ def AL(EXAMPLE):
         Data.g = torch.cat((Data.g, g_added), 0)
         Data.x_candidate = torch.cat((Data.x_candidate[:ind_lf], Data.x_candidate[ind_lf+1:]))
         N_samples_added_total = N_samples_added_total + 1
-        
+    
+    # Plot losses of final model
+    plot_losses(it, Data)
+    
     # Store results
     # Estimate failure probability
     estimate_Pf_0 = estimate_Pf_all[-1]

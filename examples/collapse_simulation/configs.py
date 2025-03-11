@@ -1,5 +1,5 @@
 from core.configs import Config, SurrogateParams, \
-    ReliabilityParams, OptimizationParams, Params
+    ReliabilityParams, SensitivityParams, OptimizationParams, Params
 
 config = Config(
     example='example1',
@@ -15,6 +15,10 @@ reliability = ReliabilityParams(
     method='MCS',
     n=1e6,
     alpha=0.05
+)
+
+sensitivity = SensitivityParams(
+    type='sobol_indices'
 )
 
 surrogate = SurrogateParams(
@@ -40,5 +44,6 @@ params = Params(
     config=config,
     reliability=reliability,
     surrogate=surrogate,
-    optimization=optimization
+    optimization=optimization,
+    sensitivity=sensitivity,
 )

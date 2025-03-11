@@ -34,17 +34,17 @@ class SurrogateParams:
 class OptimizationParams:
     opt_type: str
     bounds_opt: list
-    opt_inside_AL: bool = False
     n_initial_ego: Optional[int]
     n_infill_ego: Optional[int]
     dim_ego: Optional[int]
     training_iterations_ego: Optional[int]
     learning_rate_ego: Optional[float]
+    opt_inside_AL: bool = False
 
 # Sensitivity analysis
 @dataclass
 class SensitivityParams:
-    sensitivity_type: str = 'sobol_indices'
+    type: str = 'sobol_indices'
 
 #########
 # Data generated in the pipeline
