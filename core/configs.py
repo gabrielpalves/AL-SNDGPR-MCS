@@ -44,6 +44,7 @@ class OptimizationParams:
 # Sensitivity analysis
 @dataclass
 class SensitivityParams:
+    n: int
     type: str = 'sobol_indices'
 
 #########
