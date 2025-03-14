@@ -2,18 +2,18 @@ from core.configs import Config, SurrogateParams, \
     ReliabilityParams, SensitivityParams, OptimizationParams, Params
 
 config = Config(
-    example='example1',
+    example='guyed_NLG_no_wind',
     seed=42,
     sampling_plan_strategy='LHS',
     learning_function='U',
     convergence_function='stop_Pf',
-    n_initial=48,
-    n_infill=60
+    n_initial=60,
+    n_infill=500
 )
 
 reliability = ReliabilityParams(
     method='MCS',
-    n=1e6,
+    n=1e7,
     alpha=0.05
 )
 
@@ -24,7 +24,7 @@ sensitivity = SensitivityParams(
 
 surrogate = SurrogateParams(
     model='SNDGPR',
-    training_iterations=1000,
+    training_iterations=10000,
     learning_rate=0.01,
     validation_split=6,
     spectral_normalization=True
@@ -32,7 +32,7 @@ surrogate = SurrogateParams(
 
 optimization = OptimizationParams(
     opt_type='grid_search',
-    bounds_opt=[[1, 5], [1, 5], [0, 4]],  # L, r, act_fun
+    bounds_opt=[[1, 5], [1, 5]],#, [0, 4]],  # L, r, act_fun
     opt_inside_AL=True,
     n_initial_ego=20,
     n_infill_ego=10,

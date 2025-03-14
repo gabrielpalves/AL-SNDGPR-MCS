@@ -39,6 +39,13 @@ class OptimizationParams:
     dim_ego: Optional[int]
     training_iterations_ego: Optional[int]
     learning_rate_ego: Optional[float]
+    opt_inside_AL: bool = False
+
+# Sensitivity analysis
+@dataclass
+class SensitivityParams:
+    n: int
+    type: str = 'sobol_indices'
 
 #########
 # Data generated in the pipeline
@@ -69,3 +76,4 @@ class Params:
     reliability: ReliabilityParams
     surrogate: SurrogateParams
     optimization: OptimizationParams
+    sensitivity: SensitivityParams

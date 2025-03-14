@@ -1,5 +1,5 @@
 from core.configs import Config, SurrogateParams, \
-    ReliabilityParams, OptimizationParams, Params
+    ReliabilityParams, SensitivityParams, OptimizationParams, Params
 
 config = Config(
     example='example1',
@@ -17,6 +17,11 @@ reliability = ReliabilityParams(
     alpha=0.05
 )
 
+sensitivity = SensitivityParams(
+    type='sobol_indices',
+    n=5e5,
+)
+
 surrogate = SurrogateParams(
     model='SNDGPR',
     training_iterations=1000,
@@ -27,7 +32,8 @@ surrogate = SurrogateParams(
 
 optimization = OptimizationParams(
     opt_type='grid_search',
-    bounds_opt=[[1, 3], [1, 3]], # [0, 4]],  # L, r, act_fun
+    bounds_opt=[[1, 3], [1, 3], [0, 4]],  # L, r, act_fun
+    opt_inside_AL=True,
     n_initial_ego=5,
     n_infill_ego=2,
     dim_ego=3,
@@ -39,5 +45,6 @@ params = Params(
     config=config,
     reliability=reliability,
     surrogate=surrogate,
-    optimization=optimization
+    optimization=optimization,
+    sensitivity=sensitivity,
 )

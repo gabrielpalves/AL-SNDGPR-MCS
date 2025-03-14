@@ -7,10 +7,11 @@ from scipy.special import ndtri
 from core.hyper_params_opt.optimization_variables import optimization_variables
 from core.K_fold_CV import kfold_train
 from core.utils.sampling_utils import min_max_normalization, add_x, evaluate_g
-from core.utils.serialization_utils import save_bests, pickle_save
+from core.utils.serialization_utils import save_load_initial, save_bests, pickle_save
 from core.utils.plot_utils import plot_losses, print_info
 from core.utils.import_utils import load_core_modules, load_example_modules, \
-    load_surrogate_modules, load_reliability_modules, load_optimization_modules
+    load_surrogate_modules, load_reliability_modules, load_optimization_modules, \
+    load_sensitivity_modules
 from core.learning_function import evaluate_lf
 from core.configs import RuntimeData
 
@@ -23,6 +24,7 @@ def AL(EXAMPLE):
     predict, _ = load_surrogate_modules(Params)
     estimate_Pf, sampling_plan = load_reliability_modules(Params)
     hyper_params_opt = load_optimization_modules(Params)
+    sensitivity_analysis = load_sensitivity_modules(Params)
     
     # Set seed for reproducibility
     SEED = Params.config.seed
@@ -45,6 +47,9 @@ def AL(EXAMPLE):
     Data = RuntimeData()
     Data.x = initial_sampling_plan(RVs, Params.config.n_initial, Params.config.seed)
     Data.x_candidate = sampling_plan(RVs, Params.reliability.n)  # sampling plan to predict
+    
+    # Evaluate/load initial sampling plan and optimize/load hyperparameters
+    # Data = save_load_initial(EXAMPLE, Data, Params, limit_state_function, hyper_params_opt)
     Data.g = limit_state_function(Data.x)
 
     # Define important variables
@@ -61,19 +66,20 @@ def AL(EXAMPLE):
     while True:
         print(f'\nIteration {it}')
         
-        if it == 0:  # optimize hyperparameters
+        if Params.optimization.opt_inside_AL:
             Data = hyper_params_opt(Data, Params)
-        else:  # use already optimized hyperparameters
-            Data = optimization_variables(Data, Params, get_best=True)
-            _, _, Data = kfold_train(Data, Params)
-
+        else:
+            if it == 0:
+                Data = hyper_params_opt(Data, Params)
+            else:
+                Data = optimization_variables(Data, Params, get_best=True)
+                _, _, Data = kfold_train(Data, Params)
+        
         # Save variables and plot loss
         save_bests(it, Data, Params, EXAMPLE)
-        plot_losses(it, Data)
         
         # Predict MC responses (only the sample which are not contained in the Kriging yet)
-        x_candidate_normalized = min_max_normalization(Data.x_max, Data.x_min, Data.x_candidate)
-        preds = predict(Data, x_candidate_normalized)
+        preds = predict(Data, min_max_normalization(Data.x_max, Data.x_min, Data.x_candidate))
         
         # Evaluate learning function
         g_mean, gs, ind_lf = evaluate_lf(preds, learning_function)
@@ -112,13 +118,19 @@ def AL(EXAMPLE):
         Data.g = torch.cat((Data.g, g_added), 0)
         Data.x_candidate = torch.cat((Data.x_candidate[:ind_lf], Data.x_candidate[ind_lf+1:]))
         N_samples_added_total = N_samples_added_total + 1
-        
+    
+    # Plot losses of final model
+    plot_losses(it, Data)
+    
     # Store results
     # Estimate failure probability
     estimate_Pf_0 = estimate_Pf_all[-1]
 
     # Estimate the covariance
     estimate_CoV = torch.sqrt((1-estimate_Pf_0) / estimate_Pf_0 / Params.reliability.n)
+    
+    # Sensitivity analysis with the trained surrogate
+    sensitivity_results = sensitivity_analysis(RVs, Data, Params, predict, evaluate_lf)
 
     # Store the results
     Results = {
@@ -132,6 +144,7 @@ def AL(EXAMPLE):
             ]),
         }
     Results['Beta_CI'] = torch.flip(-ndtri(Results['Pf_CI']), [0])
+    Results['Sensitivity'] = sensitivity_results
 
     History = {
         'Pf': estimate_Pf_all,

@@ -1,11 +1,44 @@
 import pickle
 import os
+from pathlib import Path
 import torch
 import numpy as np
 import scipy.io as sio
 from core.hyper_params_opt.optimization_variables import optimization_variables
 
-# Functions related to saving and loading data using pickle
+
+# Functions related to saving and loading data
+def save_load_initial(EXAMPLE, Data, Params, limit_state_function, hyper_params_opt):
+    folder_path = os.path.join("examples", EXAMPLE, "data", "initial")
+    file = os.path.join(folder_path, 'Data.pkl')
+    if os.path.exists(file):
+        with open(file, 'rb') as f:
+            loaded_Data = pickle.load(f)
+            
+            # Check hyperparameters optimization
+            if loaded_Data.f_opt is None:
+                # Check initial sampling plan evaluation
+                if loaded_Data.g is None:
+                    Data.g = limit_state_function(Data.x)
+                    with open(file, 'wb') as f: pickle.dump(Data, f)
+                else:
+                    Data = loaded_Data
+                    
+                Data = hyper_params_opt(Data, Params)
+                Data.model, Data.likelihood, Data.act_fun = None, None, None
+                with open(file, 'wb') as f: pickle.dump(Data, f)
+    else:
+        os.makedirs(folder_path, exist_ok=True)  # Create the folder if it doesn't exist
+        Data.g = limit_state_function(Data.x)
+        with open(file, 'wb') as f: pickle.dump(Data, f)
+        
+        Data = hyper_params_opt(Data, Params)
+        Data.model, Data.likelihood, Data.act_fun = None, None, None
+        with open(file, 'wb') as f: pickle.dump(Data, f)
+
+    return Data
+
+
 def pickle_save(data_dict, EXAMPLE):
     folder_path = os.path.join("examples", EXAMPLE, "data")
     os.makedirs(folder_path, exist_ok=True)

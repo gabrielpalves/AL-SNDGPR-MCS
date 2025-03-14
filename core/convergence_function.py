@@ -1,18 +1,23 @@
 import torch
+from scipy.special import ndtri
 
 
 def stop_Pf(g, g_mean, gs, Params):
     """Stop Pf convergence criteria"""
     N = Params.config.n_initial
     n = Params.reliability.n
+    ALPHA = Params.reliability.alpha
+
     # Estimate the current Pf, Pf+ and Pf-
-    Pf = (torch.sum(g_mean <= 0) + torch.sum(g[N+1:] <= 0)) / n
+    Pf = (torch.sum(g_mean <= 0) + torch.sum(g[N+1:] <= 0))/n
     Pf_plus = (
-        torch.sum(g_mean-2*gs <= 0) + torch.sum(g[N+1:] <= 0)
-        ) / n
+        torch.sum(g_mean - gs*ndtri(1-ALPHA/2) <= 0) +
+        torch.sum(g[N+1:] <= 0)
+        )/n
     Pf_minus = (
-        torch.sum(g_mean+2*gs <= 0) + torch.sum(g[N+1:] <= 0)
-        ) / n
+        torch.sum(g_mean + gs*ndtri(1-ALPHA/2) <= 0) +
+        torch.sum(g[N+1:] <= 0)
+        )/n
 
     delta = 0.10
 
