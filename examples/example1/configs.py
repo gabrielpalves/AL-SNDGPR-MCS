@@ -19,7 +19,7 @@ reliability = ReliabilityParams(
 
 sensitivity = SensitivityParams(
     type='sobol_indices',
-    n=5e5,
+    n=5e4,
 )
 
 surrogate = SurrogateParams(

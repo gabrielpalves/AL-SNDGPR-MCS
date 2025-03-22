@@ -15,7 +15,7 @@ def add_x(x_candidate, ind_lf, it, EXAMPLE):
     x_added = x_added.view(1, data_dim)
     # x_added = x_added * (x_max - x_min) + x_min  # undo normalization
     
-    numpy_array = x_added.numpy()
+    numpy_array = x_added.detach().cpu().numpy()
     folder_path = os.path.join("examples", EXAMPLE, "data", "sampling_plan")
     os.makedirs(folder_path, exist_ok=True)
     full_path = os.path.join(folder_path, f'x{it}.mat')
@@ -31,9 +31,13 @@ def evaluate_g(x_added, it, limit_state_function, EXAMPLE):
     if os.path.isfile(full_path):
         mat_contents = sio.loadmat(full_path)
         g_added = torch.Tensor(mat_contents['g']).view(-1)
+        if torch.cuda.is_available():
+            g_added = g_added.cuda()
     else:
         g_added = torch.Tensor(limit_state_function(x_added))
-        sio.savemat(full_path, {'g': g_added.numpy()})
+        if torch.cuda.is_available():
+            g_added = g_added.cuda()
+        sio.savemat(full_path, {'g': g_added.detach().cpu().numpy()})
     return g_added
 
 def keep_best(Data, OptData):
