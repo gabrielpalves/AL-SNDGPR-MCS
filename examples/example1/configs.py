@@ -18,7 +18,6 @@ reliability = ReliabilityParams(
 )
 
 sensitivity = SensitivityParams(
-    type='sobol_indices',
     n=5e4,
 )
 
@@ -32,7 +31,7 @@ surrogate = SurrogateParams(
 
 optimization = OptimizationParams(
     opt_type='grid_search',
-    bounds_opt=[[1, 3], [1, 3], [0, 4]],  # L, r, act_fun
+    bounds_opt=[[1, 3], [1, 3]], #, [0, 4]],  # L, r, act_fun
     opt_inside_AL=True,
     n_initial_ego=5,
     n_infill_ego=2,

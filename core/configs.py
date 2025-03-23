@@ -27,25 +27,24 @@ class SurrogateParams:
     training_iterations: int
     learning_rate: float
     validation_split: int
-    spectral_normalization: Optional[bool] = False
+    spectral_normalization: Optional[bool] = True
 
 # Optimization Parameters
 @dataclass
 class OptimizationParams:
-    opt_type: str
     bounds_opt: list
-    n_initial_ego: Optional[int]
-    n_infill_ego: Optional[int]
-    dim_ego: Optional[int]
-    training_iterations_ego: Optional[int]
-    learning_rate_ego: Optional[float]
-    opt_inside_AL: bool = False
+    opt_type: str
+    opt_inside_AL: Optional[bool] = True
+    n_initial_ego: Optional[int] = 15
+    n_infill_ego: Optional[int] = 10
+    dim_ego: Optional[int] = 3
+    training_iterations_ego: Optional[int] = 10000
+    learning_rate_ego: Optional[float] = 0.005
 
 # Sensitivity analysis
 @dataclass
 class SensitivityParams:
     n: int
-    type: str = 'sobol_indices'
 
 #########
 # Data generated in the pipeline
